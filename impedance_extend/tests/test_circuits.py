@@ -220,12 +220,4 @@ def test_CustomCircuitwAlgorithm():
         custom_circuit.fit(frequencies, Z, bounds=bounds,
                            optimizations=optimizations.copy(), scale=scale)
         assert custom_circuit._is_fit()
-        param = custom_circuit.parameters_
-        Z_fit = custom_circuit.predict(frequencies=frequencies)
-        err = rmse(Z, Z_fit)
-        if not np.allclose(results, param, rtol=1e-1):
-            print(f'Failed {circuit}: {results} != {param}; RMSE={err}')
-        else:
-            print(f'Passed {circuit}')
-        custom_circuit.plot(f_data=frequencies, Z_data=Z, kind="nyquist")
-        # plt.show()
+

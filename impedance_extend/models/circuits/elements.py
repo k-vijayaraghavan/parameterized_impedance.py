@@ -302,10 +302,14 @@ def Gs(p, f):
     """
     omega = 2 * np.pi * np.array(f)
     R_G, t_G, phi = p[0], p[1], p[2]
-    Z = R_G / (
-        np.sqrt(1 + 1j * omega * t_G)
-        * np.tanh(phi * np.sqrt(1 + 1j * omega * t_G))
-    )
+    
+    arg = phi * np.sqrt(1 + 1j * omega * t_G)
+    tanh = np.ones_like(arg, dtype=complex)
+    tanh[arg.real <= -100] = -1.0
+    mask = np.abs(arg.real) < 100
+    tanh[mask] = np.tanh(arg[mask])
+
+    Z = R_G / (np.sqrt(1 + 1j * omega * t_G) * tanh)
     return Z
 
 
@@ -364,7 +368,14 @@ def TLMQ(p, f):
     omega = 2 * np.pi * np.array(f)
     Rion, Qs, gamma = p[0], p[1], p[2]
     Zs = 1 / (Qs * (1j * omega) ** gamma)
-    Z = np.sqrt(Rion * Zs) / np.tanh(np.sqrt(Rion / Zs))
+    
+    arg = np.sqrt(Rion / Zs)
+    tanh = np.ones_like(arg, dtype=complex)
+    tanh[arg.real <= -100] = -1.0
+    mask = np.abs(arg.real) < 100
+    tanh[mask] = np.tanh(arg[mask])
+
+    Z = np.sqrt(Rion * Zs) / tanh
     return Z
 
 
@@ -402,14 +413,17 @@ def T(p, f):
     A, B, a, b = p[0], p[1], p[2], p[3]
     beta = (a + 1j * omega * b) ** (1 / 2)
 
-    sinh = []
-    for x in beta:
-        if x < 100:
-            sinh.append(np.sinh(x))
-        else:
-            sinh.append(1e10)
+    mask = np.abs(beta.real) < 100
 
-    Z = A / (beta * np.tanh(beta)) + B / (beta * np.array(sinh))
+    sinh = np.ones_like(beta, dtype=complex) * 1e10
+    sinh[beta.real <= -100] = -1e10
+    sinh[mask] = np.sinh(beta[mask])
+
+    tanh = np.ones_like(beta, dtype=complex)
+    tanh[beta.real <= -100] = -1.0
+    tanh[mask] = np.tanh(beta[mask])
+
+    Z = A / (beta * tanh) + B / (beta * sinh)
     return Z
 
 

@@ -12,7 +12,7 @@ import warnings
 
 class BaseCircuit:
     """ Base class for equivalent circuit models """
-    def __init__(self, initial_guess=None, constants=None, name=None):
+    def __init__(self, initial_guess=[], constants=None, name=None):
         """ Base constructor for any equivalent circuit model
 
         Parameters
@@ -28,8 +28,6 @@ class BaseCircuit:
             Name for the circuit
         """
 
-        if initial_guess is None:
-            initial_guess = []
         # if supplied, check that initial_guess is valid and store
         initial_guess = [x for x in initial_guess if x is not None]
         for i in initial_guess:

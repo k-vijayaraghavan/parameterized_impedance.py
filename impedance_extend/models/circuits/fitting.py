@@ -43,7 +43,7 @@ def rmse(a, b):
     return np.linalg.norm(a - b) / np.sqrt(n)
 
 
-def set_default_bounds(circuit, constants=None):
+def set_default_bounds(circuit, constants={}):
     """ This function sets default bounds for optimization.
 
     set_default_bounds sets bounds of 0 and np.inf for all parameters,
@@ -64,8 +64,6 @@ def set_default_bounds(circuit, constants=None):
         Lower and upper bounds on parameters.
     """
 
-    if constants is None:
-        constants = {}
     # extract the elements from the circuit
     extracted_elements = extract_circuit_elements(circuit)
 
@@ -135,8 +133,8 @@ def is_scalarval(var, val):
 
 
 def circuit_fit(frequencies, impedances, circuit, initial_guess,
-                constants=None, bounds=None, weight_by_modulus=False,
-                global_opt=False, optimizations=None, scale=None,
+                constants={}, bounds=None, weight_by_modulus=False,
+                global_opt=False, optimizations=[], scale=None,
                 **kwargs):
 
     """ Main function for fitting an equivalent circuit to data.
@@ -219,10 +217,6 @@ def circuit_fit(frequencies, impedances, circuit, initial_guess,
     Currently, an error of -1 is returned.
 
     """
-    if constants is None:
-        constants = {}
-    if optimizations is None:
-        optimizations = []
     kwargs_org = kwargs
     f = np.array(frequencies, dtype=float)
     Z = np.array(impedances, dtype=complex)
@@ -251,13 +245,17 @@ def circuit_fit(frequencies, impedances, circuit, initial_guess,
         opt = {"algorithm": opt}
 
     target_Z = np.hstack([Z.real, Z.imag])
-    sigma = kwargs.pop('sigma', 1)
 
     soft_constraint = kwargs.pop('soft_constraint', lambda p: 0)
 
     algo = opt["algorithm"]
     if algo in ('scipy_minimize', 'pygad', 'pyswarms') or \
             callable(opt["algorithm"]):
+        sigma = kwargs.pop('sigma', 1)
+        # weighting scheme for fitting
+        if weight_by_modulus:
+            abs_Z = np.abs(Z)
+            kwargs['sigma'] = np.hstack([abs_Z, abs_Z])
         needscale = True
         if callable(algo):
             sig = inspect.signature(algo)
